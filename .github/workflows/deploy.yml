@@ -5,7 +5,8 @@ on:
     branches:
       - main # Or 'master', or any branch you want to trigger deployment from
     paths:
-      - 'public/**' # Adjust this path to your HTML/CSS files' location
+      - 'index.html' # Adjust this path to your HTML/CSS files' location
+      - 'style.css'
       - '.github/workflows/deploy.yml' # Trigger if workflow file changes
 
 jobs:
