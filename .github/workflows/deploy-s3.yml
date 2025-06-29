@@ -1,45 +1,21 @@
-name: Deploy Static Website to S3
+name: Deploy a Static Website on S3
 
 on:
   push:
     branches:
-      - main # Or 'master', or any branch you want to trigger deployment from
-    paths:
-      - 'public/**' # Adjust this path to your HTML/CSS files' location
-      - '.github/workflows/deploy-s3.yml' # Trigger if workflow file changes
+    - master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: actions/checkout@master
+    - uses: jakejarvis/s3-sync-action@master
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
-
-    - name: Deploy static files to S3
-      run: |
-        # Change 'public/' to the path where your HTML/CSS files are located in your repository
-        aws s3 sync public/ s3://${{ secrets.S3_BUCKET_NAME }} --delete --acl public-read
+        args: --acl public-read --follow-symlinks --delete
       env:
+        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
-
-    - name: Invalidate CloudFront Cache (Optional, if using CloudFront)
-      # Only include this step if you are using CloudFront in front of your S3 bucket
-      # You'll also need a CloudFront distribution ID as a GitHub Secret (e.g., CLOUDFRONT_DISTRIBUTION_ID)
-      # And the IAM user needs 'cloudfront:CreateInvalidation' permission
-      if: success() # Only run if previous steps are successful
-      run: |
-        aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        AWS_REGION: 'us-west-1'   # optional: defaults to us-east-1
+        SOURCE_DIR: 'public'      # optional: defaults to entire repository
